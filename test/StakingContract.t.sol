@@ -6,17 +6,7 @@ import "../src/StakingContract.sol";
 import { Test } from "forge-std/src/Test.sol";
 import { console2 } from "forge-std/src/console2.sol";
 import { StdCheats } from "forge-std/src/StdCheats.sol";
-
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
-/// @title TestToken
-/// @notice A simple ERC20 token for testing purposes
-contract TestToken is ERC20 {
-    constructor() ERC20("Test Token", "TT") {
-        // Mint 1 million tokens for testing
-        _mint(msg.sender, 1_000_000 * 10 ** 18);
-    }
-}
+import { TestToken } from "../src/TestToken.sol";
 
 /// @title StakingContractTest
 /// @notice Test suite for the Staking Contract
@@ -33,10 +23,8 @@ contract StakingContractTest is Test {
 
     /// @notice Test staking with random amounts using fuzzing
     function testFuzzStake(uint256 amount) public {
-        vm.assume(amount > 0); // Only attempt to stake if the amount is greater than 0
-        amount = bound(amount, 1, 500_000 * 10 ** 18); // Cap amount to prevent trivial failures
+        amount = bound(amount, 1, 1_000_000 * 10 ** 18); // Cap amount to prevent trivial failures
 
-        assertTrue(testToken.transfer(address(stakingContract), amount), "Transfer failed");
         uint256 initialBalance = testToken.balanceOf(address(this));
         stakingContract.stake(amount);
 
@@ -48,24 +36,50 @@ contract StakingContractTest is Test {
 
     /// @notice Test unstaking with random amounts using fuzzing
     function testFuzzUnstake(uint256 amount) public {
-        vm.assume(amount > 0); // Only attempt to unstake if the amount is greater than 0
-        amount = bound(amount, 1, 500_000 * 10 ** 18); // Cap amount to prevent trivial failures
+        // Only attempt to unstake if the amount is between 1 and 1_000_000
+        amount = bound(amount, 1, 1_000_000 * 10 ** 18);
 
         // Stake the amount first
-        assertTrue(testToken.transfer(address(stakingContract), amount), "Transfer failed");
         uint256 initialBalance = testToken.balanceOf(address(this));
         stakingContract.stake(amount);
 
         // Simulate time passage to accrue rewards
-        vm.roll(block.number + 10);
+        vm.roll(block.number + 100);
 
         // Unstake the amount
         stakingContract.unstake();
 
-        // Check if the amount was transferred back to the user
+        uint256 finalBalance = testToken.balanceOf(address(this));
+        bool rewardPaid = finalBalance > initialBalance;
+        // Check if the amount was transferred back and the rewards were paid
+        assertTrue(rewardPaid, "Rewards not paid correctly.");
+
+        assertGt(
+            finalBalance, initialBalance, "Final balance should be greater than initial after unstaking with rewards."
+        );
+    }
+
+    /// @notice Test staking with a specific amount
+    /// @notice This is a not a fuzz test, but a specific test for a specific amount
+    function testUnstakeWithMinAmount() public {
+        uint256 amount = 1;
+
+        // Stake the amount first
+        uint256 initialBalance = testToken.balanceOf(address(this));
+        stakingContract.stake(amount);
+
+        // Simulate time passage
+        vm.roll(block.number + 100);
+
+        // Unstake the amount
+        stakingContract.unstake();
+
         uint256 finalBalance = testToken.balanceOf(address(this));
 
-        // Check if the rewards were paid
+        console2.log("initialBalance", initialBalance);
+        console2.log("finalBalance", finalBalance);
+
+        // Check if the amount was transferred back and the rewards were paid
         bool rewardPaid = finalBalance > initialBalance;
 
         assertTrue(rewardPaid, "Rewards not paid correctly.");
