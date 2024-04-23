@@ -1,5 +1,5 @@
 
-# Fuzz Testing Staking Contract Project
+# Fuzz Testing Exploration with a Staking Contract Project
 
 ### Introduction
 
