@@ -58,7 +58,7 @@ contract StakingContract {
             stakingToken.mintRewards(msg.sender, reward);
         }
         stakes[msg.sender] = 0;
-        emit Unstaked(msg.sender, stakedAmount);
+        emit Unstaked(msg.sender, stakedAmount + reward);
         require(stakingToken.transfer(msg.sender, stakedAmount), "Transfer failed");
     }
 
@@ -67,6 +67,7 @@ contract StakingContract {
         uint256 reward = calculateReward(msg.sender);
         require(reward > 0, "No rewards available");
         rewards[msg.sender] = 0;
+        startBlock[msg.sender] = block.number;
         emit RewardPaid(msg.sender, reward);
         stakingToken.mintRewards(msg.sender, reward);
     }
