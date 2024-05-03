@@ -87,9 +87,7 @@ Descriptions for each fuzz test in the `StakingContractFuzz.t.sol` test suite ar
    - Assesses the contract's capacity to manage multiple consecutive stakes and a single unstake, confirming the precise computation of accumulated rewards and the reflection of these in the final token balance.
 
 5. **`testFuzz_StakeRedeemInterleaved(uint256[] memory stakes, uint16 rolledBlocks)`**:
-   - Simulates a scenario with multiple stakes at different intervals and intermittent reward redemptions, checking the precision of reward calculations and the correct adjustment of the final token balance after all
-
- operations.
+   - Simulates a scenario with multiple stakes at different intervals and intermittent reward redemptions, checking the precision of reward calculations and the correct adjustment of the final token balance after all operations.
 
 ### Development Notes
 
